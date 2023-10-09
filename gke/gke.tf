@@ -1,6 +1,3 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
 variable "gke_username" {
   default     = ""
   description = "gke username"
@@ -23,8 +20,9 @@ data "google_container_engine_versions" "gke_version" {
 }
 
 resource "google_container_cluster" "primary" {
-  name     = "${var.project_id}-gke"
-  location = var.region
+  name           = "${var.project_id}-gke"
+  location       = var.zone
+  node_locations = []
 
   remove_default_node_pool = true
   initial_node_count       = 1
@@ -34,18 +32,21 @@ resource "google_container_cluster" "primary" {
 }
 
 # Separately Managed Node Pool
-resource "google_container_node_pool" "primary_nodes" {
+resource "google_container_node_pool" "primary_preemptible_nodes" {
   name     = google_container_cluster.primary.name
-  location = var.region
+  location = var.zone
   cluster  = google_container_cluster.primary.name
 
   version    = data.google_container_engine_versions.gke_version.release_channel_latest_version["STABLE"]
   node_count = var.gke_num_nodes
-
   node_config {
+    preemptible = true
     oauth_scopes = [
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/servicecontrol",
+      "https://www.googleapis.com/auth/service.management.readonly",
+      "https://www.googleapis.com/auth/trace.append"
     ]
 
     labels = {
@@ -53,8 +54,9 @@ resource "google_container_node_pool" "primary_nodes" {
     }
 
     # preemptible  = true
-    machine_type = "n1-standard-1"
+    machine_type = "e2-standard-2"
     tags         = ["gke-node", "${var.project_id}-gke"]
+    disk_size_gb = 15
     metadata = {
       disable-legacy-endpoints = "true"
     }

@@ -6,9 +6,15 @@ variable "region" {
   description = "region"
 }
 
+variable "zone" {
+  description = "zone"
+}
+
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project     = var.project_id
+  region      = var.region
+  zone        = var.zone
+  credentials = file("../cred.json")
 }
 
 # VPC
