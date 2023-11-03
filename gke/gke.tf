@@ -20,7 +20,7 @@ data "google_container_engine_versions" "gke_version" {
 }
 
 resource "google_container_cluster" "primary" {
-  name           = "${var.project_id}-gke"
+  name           = "duckduck-gke"
   location       = var.zone
   node_locations = []
 
